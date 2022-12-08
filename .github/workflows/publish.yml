@@ -1,4 +1,5 @@
 name: Publish 📦 to PyPI
+on: workflow_dispatch
 jobs:
   build-n-publish:
     name: Build and publish Python 🐍 distributions 📦 to PyPI and TestPyPI
