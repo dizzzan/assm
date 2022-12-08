@@ -1,5 +1,5 @@
 import setuptools
-from assm import config
+from yassm import config
 
 install_requires = [
     "boto3 ~= 1.26.24",
