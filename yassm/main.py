@@ -8,7 +8,7 @@ import os
 import sys
 from pathlib import Path
 
-from assm.config import CLI, NAME, CONFIG_FILE
+from yassm.config import CLI, NAME, CONFIG_FILE
 
 
 @click.group(
