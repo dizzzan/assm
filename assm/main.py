@@ -8,15 +8,10 @@ import os
 import sys
 from pathlib import Path
 
-CLI = "assm"
-NAME = "Another Simple Secrets Manager"
-CONFIG_FILE = f".{CLI}-config.yml"
-
-_client: boto3.client
-
+from assm.config import CLI, NAME, CONFIG_FILE
 
 @click.group(
-    help=f"{NAME} ({CLI}) seeds environment variables using secrets from AWS Secrets Manager."
+    help=f"{CLI} ({CLI}) seeds environment variables using secrets from AWS Secrets Manager."
 )
 def cli():
     pass
@@ -102,9 +97,9 @@ def load_secrets(configs):
                 "aws_profile", os.environ["AWS_PROFILE"]
             )
             session = boto3.Session(profile_name=aws_profile)
-            _client = session.client("secretsmanager")
+            client = session.client("secretsmanager")
             print(
-                # f" # Loading secrets found in '{cfg_filename}' from AWS[{aws_profile}]"
+                f" # Loading secrets found in '{cfg_filename}' from AWS[{aws_profile}]"
             )
             for sec in cfg.get("secrets"):
                 id = sec.get("id")
@@ -114,7 +109,7 @@ def load_secrets(configs):
                     print(f" # !!! No env var specified for secret {id}")
                     continue
                 try:
-                    asm_response = _client.get_secret_value(SecretId=id)
+                    asm_response = client.get_secret_value(SecretId=id)
                     secret_value = asm_response["SecretString"]
                 except Exception as e:
                     print(f"# !!! Cound not load secret {id}: {e}")
@@ -145,13 +140,13 @@ def sample():
 @cli.command(help="Generate some useful shell aliases.")
 def alias():
     f = __file__
-    c = sys.argv[0]
-    tmpl = f"assmf() {{ eval `{c} %%` }};assmf"
+    c = Path(sys.argv[0]).name
+    tmpl = f"f() {{ source <({CLI} %%)}};f"
     include_cli_alias = f'alias {CLI}="python ' + f + '"' if c != CLI else ""
     print(
         f"""
 # Add these to your .bashrc or .zshrc 
-# Warning! eval can be dangerous, use at your own risk!
+# Warning! this can be dangerous, use at your own risk!
 {include_cli_alias}
 alias {CLI}s="{(tmpl.replace("%%", "seed -t"))}"
 alias {CLI}w="{(tmpl.replace("%%", "wipe -t"))}"
