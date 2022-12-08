@@ -9,7 +9,7 @@ install_requires = [
 setuptools.setup(
     name=config.CLI,
     description=config.NAME,
-    version="0.1",
+    version="0.1.1",
     packages=setuptools.find_packages(),
     install_requires=[
         "Click",
