@@ -10,6 +10,7 @@ from pathlib import Path
 
 from assm.config import CLI, NAME, CONFIG_FILE
 
+
 @click.group(
     help=f"{CLI} ({CLI}) seeds environment variables using secrets from AWS Secrets Manager."
 )
