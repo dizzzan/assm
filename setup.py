@@ -9,6 +9,7 @@ install_requires = [
 setuptools.setup(
     name=config.CLI,
     description=config.NAME,
+    long_description=f"{config.CLI} ({config.NAME}) is a tool for seeding AWS Secrets Manager secrets into local environment variables.",
     version="0.1.1",
     packages=setuptools.find_packages(),
     install_requires=[
