@@ -94,9 +94,13 @@ def load_secrets(configs):
     for cfg_filename in configs:
         with open(cfg_filename) as cfg_file:
             cfg = yaml.safe_load(cfg_file)
-            aws_profile = cfg.get("config").get(
-                "aws_profile", os.environ["AWS_PROFILE"]
-            )
+            aws_profile = None
+            try:
+                aws_profile = cfg.get("config").get(
+                    "aws_profile", os.environ.get("AWS_PROFILE", None)
+                )
+            except:
+                pass  # no config section
             session = boto3.Session(profile_name=aws_profile)
             client = session.client("secretsmanager")
             print(
