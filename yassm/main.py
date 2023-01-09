@@ -8,9 +8,9 @@ import os
 import sys
 from pathlib import Path
 
-from yassm.config import CLI, NAME, CONFIG_FILE
+from yassm.config import CLI, NAME, CONFIG_FILE, VERSION
 
-IS_CI = False
+CI = False
 
 
 @click.group(
@@ -18,13 +18,16 @@ IS_CI = False
 )
 @click.option(
     "-ci",
+    envvar="CI",
     help="Use this option if you are running in a CI environment.",
     default=False,
     is_flag=True,
 )
 def cli(ci):
-    global IS_CI
-    IS_CI = ci
+    global CI
+    CI = ci
+    if ci:
+        out(f"# Running in CI mode")
     pass
 
 
@@ -97,7 +100,7 @@ def wipe_secrets(configs):
         with open(cfg_filename) as cfg_file:
             cfg = yaml.safe_load(cfg_file)
             for sec in cfg.get("secrets"):
-                print(f" unset {sec.get('env')}")
+                out(f"unset {sec.get('env')}")
 
 
 def load_secrets(configs):
@@ -113,26 +116,24 @@ def load_secrets(configs):
                 pass  # no config section
             session = boto3.Session(profile_name=aws_profile)
             client = session.client("secretsmanager")
-            print(
-                f" # Loading secrets found in '{cfg_filename}' from AWS[{aws_profile}]"
-            )
+            out(f"# Loading secrets found in '{cfg_filename}' from AWS[{aws_profile}]")
             for sec in cfg.get("secrets"):
                 id = sec.get("id")
                 key = sec.get("key")
                 env = sec.get("env")
                 if not env:
-                    print(f" # !!! No env var specified for secret {id}")
+                    out(f"# !!! No env var specified for secret {id}")
                     continue
                 try:
                     asm_response = client.get_secret_value(SecretId=id)
                     secret_value = asm_response["SecretString"]
                 except Exception as e:
-                    print(f"# !!! Cound not load secret {id}: {e}")
+                    out(f"# !!! Cound not load secret {id}: {e}")
                     continue
                 if key:
                     secret_value = json.loads(secret_value).get(key)
-                print(f"{'' if IS_CI else ' '} # {id}:{key} -> {env}")
-                print(f"{'' if IS_CI else ' '} export {env}={secret_value}")
+                out(f"# {id}:{key} -> {env}")
+                out(f"export {env}={secret_value}")
 
 
 @cli.command(help="Print a sample config file.")
@@ -167,6 +168,15 @@ alias {CLI}s="{(tmpl.replace("%%", "seed -t"))}"
 alias {CLI}w="{(tmpl.replace("%%", "wipe -t"))}"
 """
     )
+
+
+@cli.command(help="Print the version.")
+def version():
+    print(f"{NAME} ({CLI}) version {VERSION}")
+
+
+def out(msg):
+    print(f"{'' if CI else ' '}{msg}")
 
 
 if __name__ == "__main__":
