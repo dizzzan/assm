@@ -132,7 +132,8 @@ def load_secrets(configs):
                     continue
                 if key:
                     secret_value = json.loads(secret_value).get(key)
-                out(f"# {id}:{key} -> {env}")
+                if not CI:
+                    out(f"# {id}:{key} -> {env}")
                 out(f'export {env}="{secret_value}"')
 
 
