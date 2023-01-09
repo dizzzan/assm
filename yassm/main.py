@@ -10,11 +10,21 @@ from pathlib import Path
 
 from yassm.config import CLI, NAME, CONFIG_FILE
 
+IS_CI = False
+
 
 @click.group(
     help=f"{NAME} ({CLI}) seeds environment variables using secrets from AWS Secrets Manager."
 )
-def cli():
+@click.option(
+    "-ci",
+    help="Use this option if you are running in a CI environment.",
+    default=False,
+    is_flag=True,
+)
+def cli(ci):
+    global IS_CI
+    IS_CI = ci
     pass
 
 
@@ -121,8 +131,8 @@ def load_secrets(configs):
                     continue
                 if key:
                     secret_value = json.loads(secret_value).get(key)
-                print(f" # {id}:{key} -> {env}")
-                print(f" export {env}={secret_value}")
+                print(f"{'' if IS_CI else ' '} # {id}:{key} -> {env}")
+                print(f"{'' if IS_CI else ' '} export {env}={secret_value}")
 
 
 @cli.command(help="Print a sample config file.")
