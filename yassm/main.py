@@ -11,6 +11,7 @@ from pathlib import Path
 from yassm.config import CLI, NAME, CONFIG_FILE, VERSION
 
 CI = False
+_CACHE = {}
 
 
 @click.group(
@@ -27,7 +28,7 @@ def cli(ci):
     global CI
     CI = ci
     if ci:
-        out(f"# Running in CI mode")
+        out("# Running in CI mode")
     pass
 
 
@@ -104,6 +105,7 @@ def wipe_secrets(configs):
 
 
 def load_secrets(configs):
+    global _CACHE
     for cfg_filename in configs:
         with open(cfg_filename) as cfg_file:
             cfg = yaml.safe_load(cfg_file)
@@ -121,11 +123,16 @@ def load_secrets(configs):
                 id = sec.get("id")
                 key = sec.get("key")
                 env = sec.get("env")
+                cached = False
                 if not env:
                     out(f"# !!! No env var specified for secret {id}")
                     continue
                 try:
-                    asm_response = client.get_secret_value(SecretId=id)
+                    if id in _CACHE:
+                        asm_response = _CACHE[id]
+                    else:
+                        asm_response = client.get_secret_value(SecretId=id)
+                        _CACHE[id] = asm_response
                     secret_value = asm_response["SecretString"]
                 except Exception as e:
                     out(f"# !!! Cound not load secret {id}: {e}")
